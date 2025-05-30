@@ -165,6 +165,11 @@ class S3BucketService:
         key = self._normalize_path(path)
         return self._stat_object(key).metadata
 
+    def retrieve_object_bytes(self, path: str) -> bytes:
+        key = self._normalize_path(path)
+        response = self.s3_client.get_object(Bucket=self.bucket, Key=key)
+        return response['Body'].read()
+
     def delete_object(self, path: str) -> None:
         key = self._normalize_path(path)
         self._stat_object(key)
