@@ -595,3 +595,41 @@ class FilePreviewAPIView(APIView):
             return Response({"type": "csv", "preview": preview_data})
 
         raise NotFound("Preview not supported for this file type.")
+
+
+from .serializers import UnzipRequestSerializer
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class FileUnzipView(APIView):
+    authentication_classes = [ApiTokenAuthentication
+                              ] if settings.USE_AUTH else []
+    permission_classes = [IsAuthenticated, IsUser, IsActive
+                          ] if settings.USE_AUTH else []
+
+    def post(self, request):
+        serializer = UnzipRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+
+        s3_service = S3BucketService(request.user)
+
+        try:
+            extracted_metadata = s3_service.unzip_file_to_s3_folder(
+                zip_path=validated["zip_path"],
+                destination_folder=validated["destination_path"])
+            return Response(
+                {
+                    "status": "success",
+                    "extracted_files": extracted_metadata
+                },
+                status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception("Unzipping failed")
+            return Response({
+                "status": "error",
+                "message": str(e)
+            },
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
