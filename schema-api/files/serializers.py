@@ -89,3 +89,7 @@ class FileNamedSerializer(FilesystemEntityTypeSerializerMixin, FileSerializer):
         if issubclass(obj.__class__, Directory):
             name += '/'
         return name
+
+class UnzipRequestSerializer(serializers.Serializer):
+    zip_path = serializers.CharField()
+    destination_path = serializers.CharField()
